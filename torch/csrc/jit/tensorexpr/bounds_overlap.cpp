@@ -87,7 +87,7 @@ OverlapKind boundOverlap(Bound a, Bound b) {
   bool startEqual = exprEquals(a.start, b.start);
   bool endEqual = exprEquals(a.end, b.end);
   if (startEqual && endEqual) {
-    return ContainedOrEqual;
+    return OverlapKind::ContainedOrEqual;
   }
 
   // We have to figure out if the bounds fall under the following 2 cases:
@@ -110,10 +110,10 @@ OverlapKind boundOverlap(Bound a, Bound b) {
   ExprPtr highDiff = IRSimplifier::simplify(alloc<Sub>(b.start, a.end));
 
   if (mustBePositive(lowDiff)) {
-    return NoOverlap;
+    return OverlapKind::NoOverlap;
   }
   if (mustBePositive(highDiff)) {
-    return NoOverlap;
+    return OverlapKind::NoOverlap;
   }
 
   ExprPtr diff_start = IRSimplifier::simplify(alloc<Sub>(b.start, a.start));
@@ -125,17 +125,17 @@ OverlapKind boundOverlap(Bound a, Bound b) {
     int end = immediateAs<int>(diff_end);
     // If diff_start and diff_end have different signs they are enclosing.
     if (start <= 0 && end >= 0) {
-      return ContainedOrEqual;
+      return OverlapKind::ContainedOrEqual;
     }
 
     if (start >= 0 && end <= 0) {
-      return Contains;
+      return OverlapKind::Contains;
     }
   }
 
   // We can't be sure there's no overlap so the conservative answer is
   // partial.
-  return PartialOverlap;
+  return OverlapKind::PartialOverlap;
 }
 
 CmpEvalResult TORCH_API compareBound(
@@ -144,18 +144,18 @@ CmpEvalResult TORCH_API compareBound(
     const CompareSelectOperation& cmp_op) {
   switch (cmp_op) {
     case CompareSelectOperation::kGT:
-      return (a > b) ? TRUE : (a <= b ? FALSE : NOT_DETERMINED);
+      return (a > b) ? CmpEvalResult::True : (a <= b ? CmpEvalResult::False : CmpEvalResult::NotDetermined);
     case CompareSelectOperation::kGE:
-      return (a >= b) ? TRUE : (a < b ? FALSE : NOT_DETERMINED);
+      return (a >= b) ? CmpEvalResult::True : (a < b ? CmpEvalResult::False : CmpEvalResult::NotDetermined);
     case CompareSelectOperation::kLT:
-      return (a < b) ? TRUE : (a >= b ? FALSE : NOT_DETERMINED);
+      return (a < b) ? CmpEvalResult::True : (a >= b ? CmpEvalResult::False : CmpEvalResult::NotDetermined);
     case CompareSelectOperation::kLE:
-      return (a <= b) ? TRUE : (a > b ? FALSE : NOT_DETERMINED);
+      return (a <= b) ? CmpEvalResult::True : (a > b ? CmpEvalResult::False : CmpEvalResult::NotDetermined);
     case CompareSelectOperation::kNE:
-      return (a != b) ? TRUE : (a == b ? FALSE : NOT_DETERMINED);
+      return (a != b) ? CmpEvalResult::True : (a == b ? CmpEvalResult::False : CmpEvalResult::NotDetermined);
     default:
       TORCH_INTERNAL_ASSERT(cmp_op == CompareSelectOperation::kEQ)
-      return (a == b) ? TRUE : (a != b ? FALSE : NOT_DETERMINED);
+      return (a == b) ? CmpEvalResult::True : (a != b ? CmpEvalResult::False : CmpEvalResult::NotDetermined);
   }
 }
 
